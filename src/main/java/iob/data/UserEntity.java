@@ -3,17 +3,14 @@ package iob.data;
 import lombok.*;
 import org.hibernate.Hibernate;
 
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.util.Collection;
 import java.util.Objects;
 
 @Getter
 @Setter
 @ToString
 @NoArgsConstructor
-@AllArgsConstructor
 @Entity
 public class UserEntity {
 
@@ -23,6 +20,17 @@ public class UserEntity {
     private UserRole role;
     private String username;
     private String avatar;
+
+    public UserEntity(String id, UserRole role, String username, String avatar) {
+        this.id = id;
+        this.role = role;
+        this.username = username;
+        this.avatar = avatar;
+    }
+
+    @ManyToMany
+    @ToString.Exclude
+    private Collection<InstanceEntity> favoriteArticles;
 
     @Override
     public boolean equals(Object o) {

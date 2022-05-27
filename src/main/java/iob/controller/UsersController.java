@@ -36,7 +36,7 @@ public class UsersController {
             @RequestBody NewUserBoundary userDetails
     ) {
         return usersService.createUser(new UserBoundary(
-                new UserID("2020b.elazar.fine", userDetails.getEmail()),
+                new UserID(null, userDetails.getEmail()),
                 userDetails.getRole(),
                 userDetails.getUsername(),
                 userDetails.getAvatar()

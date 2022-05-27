@@ -2,9 +2,7 @@ package iob.logic.impl;
 
 import iob.boundary.InstanceBoundary;
 import iob.boundary.inner.InstanceID;
-import iob.data.InstanceEntity;
-import iob.data.UserEntity;
-import iob.data.UserRole;
+import iob.data.*;
 import iob.data.dao.InstancesDao;
 import iob.logic.EnhancedInstancesService;
 import iob.logic.exception.EntityNotFoundException;
@@ -18,6 +16,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,6 +28,8 @@ public class JpaInstancesService implements EnhancedInstancesService {
     private final ObjectConverter converter;
     private final Authorizer authorizer;
 
+    private final SimpleDateFormat articleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
 
     @Value("${spring.application.name}")
     private String domain;
@@ -37,6 +39,7 @@ public class JpaInstancesService implements EnhancedInstancesService {
         this.instancesDao = instancesDao;
         this.converter = converter;
         this.authorizer = authorizer;
+        articleDateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     }
 
     // ***************************** Deprecated ***************************
@@ -87,6 +90,12 @@ public class JpaInstancesService implements EnhancedInstancesService {
                 UserRole.MANAGER
         );
 
+        // if article already exists, return it instead of recreating it
+        if (instanceBoundary.getType().equals("article")) {
+            InstanceBoundary existingArticle = getArticleIfExists(instanceBoundary);
+            if (existingArticle != null) return existingArticle;
+        }
+
         if (instanceBoundary.getInstanceId() == null) {
             instanceBoundary.setInstanceId(new InstanceID());
         }
@@ -97,6 +106,76 @@ public class JpaInstancesService implements EnhancedInstancesService {
         InstanceEntity entity = converter.toEntity(instanceBoundary);
 
         return converter.toBoundary(instancesDao.save(entity));
+    }
+
+    private String getOrNull(Object obj) {
+        return (obj == null || obj.toString().isEmpty()) ? null : obj.toString();
+    }
+
+    private InstanceBoundary getArticleIfExists(InstanceBoundary instanceBoundary) {
+        if (instanceBoundary.getInstanceAttributes() == null) {
+            throw new InvalidInputException("null instance attributes");
+        }
+        if (!instanceBoundary.getInstanceAttributes().containsKey("theArticle")) {
+            throw new InvalidInputException("instance attributes is missing `theArticle` field");
+        }
+
+        Map<String, Object> theArticleAsMap = (Map<String, Object>) instanceBoundary.getInstanceAttributes().get("theArticle");
+
+        if (theArticleAsMap == null) {
+            throw new InvalidInputException("`theArticle` field value is null");
+        }
+
+        Map<String, Object> articleSourceAsMap = (Map<String, Object>) theArticleAsMap.get("source");
+
+        Article.ArticleSource articleSource = null;
+        if (articleSourceAsMap != null) {
+            articleSource = new Article.ArticleSource(
+                    getOrNull(articleSourceAsMap.get("id")),
+                    getOrNull(articleSourceAsMap.get("name"))
+            );
+        }
+
+        Date publishedAt;
+
+        if (theArticleAsMap.containsKey("publishedAt")) {
+            try {
+                publishedAt = articleDateFormat.parse(theArticleAsMap.get("publishedAt").toString());
+            } catch (ParseException e) {
+                throw new InvalidInputException("invalid `publishedAt` field format, the correct format is: " + articleDateFormat.toPattern());
+            }
+        } else {
+            publishedAt = null;
+        }
+
+        Article theArticle = Article
+                .builder()
+                .author(getOrNull(theArticleAsMap.get("author")))
+                .category(Category.valueOf(theArticleAsMap.get("category").toString()))
+                .content(getOrNull(theArticleAsMap.get("content")))
+                .description(getOrNull(theArticleAsMap.get("description")))
+                .publishedAt(publishedAt)
+                .title(getOrNull(theArticleAsMap.get("title")))
+                .source(articleSource)
+                .url(getOrNull(theArticleAsMap.get("url")))
+                .urlToImage(getOrNull(theArticleAsMap.get("urlToImage")))
+                .build();
+
+        String articleUrl = theArticle.getUrl();
+
+        if (!articleUrl.equals(instanceBoundary.getName())) {
+            throw new InvalidInputException("instance's name and article's url must match");
+        }
+
+        List<InstanceBoundary> articlesWithSameUrl = findInstancesByName(
+                instanceBoundary.getCreatedBy().getUserId().getDomain(),
+                instanceBoundary.getCreatedBy().getUserId().getEmail(),
+                articleUrl,
+                1,
+                0
+        );
+
+        return articlesWithSameUrl.size() > 0 ? articlesWithSameUrl.get(0) : null;
     }
 
     @Override
@@ -289,4 +368,5 @@ public class JpaInstancesService implements EnhancedInstancesService {
                 .map(converter::toBoundary)
                 .collect(Collectors.toList());
     }
+
 }

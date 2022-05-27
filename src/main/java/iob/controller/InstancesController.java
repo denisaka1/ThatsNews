@@ -146,6 +146,4 @@ public class InstancesController {
                         page)
                 .toArray(new InstanceBoundary[0]);
     }
-
-
 }

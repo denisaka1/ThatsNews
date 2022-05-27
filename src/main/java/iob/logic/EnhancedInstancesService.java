@@ -2,6 +2,7 @@ package iob.logic;
 
 import iob.boundary.InstanceBoundary;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface EnhancedInstancesService extends InstancesService {
@@ -58,6 +59,5 @@ public interface EnhancedInstancesService extends InstancesService {
             int size,
             int page
     );
-
 
 }

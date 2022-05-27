@@ -2,9 +2,7 @@ package iob.logic.impl;
 
 import iob.boundary.ActivityBoundary;
 import iob.boundary.inner.ActivityID;
-import iob.data.ActivityEntity;
-import iob.data.InstanceEntity;
-import iob.data.UserRole;
+import iob.data.*;
 import iob.data.dao.ActivitiesDao;
 import iob.data.dao.InstancesDao;
 import iob.data.dao.UsersDao;
@@ -19,9 +17,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,7 +70,7 @@ public class JpaActivitiesService implements EnhancedActivitiesService {
             throw new InvalidInputException("blank `invokedBy` field");
         }
 
-        authorizer.authorize(
+        UserEntity authorizedUser = authorizer.authorize(
                 true,
                 activityBoundary.getInvokedBy().getUserId().getDomain(),
                 activityBoundary.getInvokedBy().getUserId().getEmail(),
@@ -107,16 +103,29 @@ public class JpaActivitiesService implements EnhancedActivitiesService {
         ActivityEntity entity = converter.toEntity(activityBoundary);
         ActivityEntity savedActivityEntity = activitiesDao.save(entity);
 
-        // TODO: finish this for server-client integration (Sprint 5).
         switch (activityBoundary.getType()) {
-            case "GET_ARTICLE":
-                // appropriate logic here
-                break;
-            case "SAVE_ARTICLE":
-                // appropriate logic here
-                break;
+            case "SAVE_FAVORITE": {
+
+                // check if instance is already in favorites by article's URL
+                if (authorizedUser.getFavoriteArticles().stream()
+                        .noneMatch(inst -> inst.getName().equals(instance.getName()))
+                ) {
+                    authorizedUser.getFavoriteArticles().add(instance);
+                    usersDao.save(authorizedUser);
+                }
+                return instance;
+            }
+            case "REMOVE_FAVORITE": {
+                authorizedUser.getFavoriteArticles().remove(instance);
+                usersDao.save(authorizedUser);
+            }
+            case "GET_FAVORITES": {
+                return authorizedUser.getFavoriteArticles().stream()
+                        .map(converter::toBoundary)
+                        .collect(Collectors.toList());
+            }
             default:
-                break; // do nothing, function will return the saved activity
+                break;
         }
         return converter.toBoundary(savedActivityEntity);
     }

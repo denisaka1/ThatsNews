@@ -45,7 +45,7 @@ public final class ObjectConverter {
     public UserEntity toEntity(UserBoundary userBoundary) {
         return new UserEntity(
                 toEntity(userBoundary.getUserId()),
-                UserRole.valueOf(userBoundary.getRole()),
+                UserRole.valueOf(userBoundary.getRole().toUpperCase()),
                 userBoundary.getUsername(),
                 userBoundary.getAvatar()
         );
