@@ -1,0 +1,59 @@
+.bd-placeholder-img {
+    font-size: 1.125rem;
+    text-anchor: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+}
+
+@media (min-width: 768px) {
+    .bd-placeholder-img-lg {
+        font-size: 3.5rem;
+    }
+}
+
+@media (min-width: 992px) {
+    .sign-form {
+        margin: 50px 0 150px 0;
+    }
+}
+
+@media (max-width: 991px) {
+    .sign-form {
+        margin: 0;
+    }
+}
+
+.sign-form {
+    border-color: #F2F3F4;
+    background-color: #F7F9F9;
+    box-shadow: 0 14px 80px rgba(34, 35, 58, 0.2);
+    padding: 30px;
+    border-radius: 15px;
+}
+
+.sign-width {
+    width: 300px;
+}
+
+.flex-grid {
+    display: grid !important;
+}
+
+h1, h2, h3, h4, h5, h6, label, span, .label {
+    font-weight: 500;
+    font-family: 'Fira Sans', sans-serif;
+}
+
+.sign-small,
+.sign-small a {
+    text-align: right;
+    font-size: 13px;
+    padding-top: 10px;
+    color: #7f7d7d;
+    margin: 0;
+}
+
+.sign-small a {
+    color: #167bff;
+}

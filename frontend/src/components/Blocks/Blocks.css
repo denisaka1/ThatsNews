@@ -1,0 +1,25 @@
+@media (max-width: 991px) {
+    .container-blocks {
+        margin: 0 10px 0 10px;
+    }
+}
+
+.source {
+    margin: -20px 0 10px 0;
+    font-size: 14px;
+}
+
+.favorite {
+    position: sticky;
+    margin-left: 450px;
+    margin-top: -65px;
+}
+
+.favorite-on {
+    color: #ffd700;
+}
+
+.favorite:hover {
+    color: #ffd700;
+    cursor: pointer;
+}
